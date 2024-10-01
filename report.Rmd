@@ -1,0 +1,145 @@
+---
+title: "My Report"
+author: "User: Wyatt Foss"
+date: "Report Generated on `r Sys.Date()`"
+output: 
+  pdf_document: default
+  html_document: default
+  word_document: default
+params:
+  input_formula1: NULL
+  input_formula2: NULL
+  input_formula3: NULL
+  pfr: NULL
+  in_prot: NULL
+  out_box: NULL
+  finalData: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# include name of file, models used, PFRs analyzed/significant, missing values, boxplot, volcano plot, QC
+
+library(ggplot2)  # Load necessary libraries
+library(ggsignif)
+library(dplyr)
+```
+
+## Kelleher Research Group: PFR Visualization Generator
+```{r, echo=FALSE}
+protdata <- params$in_prot
+PFR <- unique(protdata$PFR)
+Treatments <- unique(protdata$Treatment)
+comment_header <- paste("Report of proteoform", PFR, "between Treatment groups:", paste(Treatments, collapse = ", "))
+cat(comment_header, "\n")  # Print the comment header
+```
+# Notes
+```{r}
+# User-input notes about observations, limitations, etc
+```
+
+# General information about the dataset
+```{r, echo=FALSE}
+cat(paste("Number of total proteoforms analyzed:"))
+cat(paste("Number of significant proteoforms (p.adj < 0.05):"))
+cat(paste("Percent missing values:"))
+```
+
+# Models used for analysis
+```{r, echo=FALSE}
+# Access the parameters
+
+formula1 <- params$input_formula1
+formula2 <- params$input_formula2
+formula3 <- params$input_formula3
+# Example usage of the formulas in your report
+f1head <- paste("Model 1:", formula1)
+f2head <- paste("Model 2:", formula2)
+f3head <- paste("Model 3:", formula3)
+cat(f1head)
+cat(f2head)
+cat(f3head)
+
+```
+
+# Boxplot of (PFR) between (Treatment groups)
+```{r, echo=FALSE}
+
+ggplot(protdata, aes(x = Treatment, y = Log2Y, fill = Treatment)) +
+      geom_boxplot() +
+      geom_jitter(shape = 16, position = position_jitter(0.2)) +
+      scale_color_brewer(palette = "Dark2") +
+      labs(title = params$pfr, x = "Treatment", y = "Log Intensity") +
+      theme_classic() +
+      geom_signif(comparisons = list(c("HigheGFR", "LoweGFR")), map_signif_level = TRUE, 
+                  annotations = paste0("p.adj:",round(filtered$qValue[1], 4)))
+```
+
+# Volcano plot of dataset showing (PFR)
+```{r, echo=FALSE}
+MLMvolcanoPlot <- function(A,B, data, pfr) {
+  # Function to generate volcano plot based on two treatment groups
+  AvB <- data[data$Treatment1== A & data$Treatment2 == B ,]
+  
+  mode <- 1
+  
+  if (nrow(AvB) == 0)
+  {
+    AvB <- data[data$Treatment1== B & data$Treatment2 == A ,]
+    mode <- -1
+    
+  }
+  
+  AvB$diffexpressed <- "NO"
+  AvB$delabel <- NA
+  
+  AvB$diffexpressed[mode*log2(AvB$fold) >0.5 & AvB$qValue < 0.05 ] <- "Up"
+  AvB$diffexpressed[mode*log2(AvB$fold) < -0.5 & AvB$qValue < 0.05 ] <- "Down"
+  
+  mycolors <- c("blue", "red", "gray")
+  names(mycolors) <- c("Down", "Up", "NO")
+  maxFold <- max(abs(log2(AvB$fold)))
+  
+  filtered <- AvB[AvB$PFR == pfr,]
+  ggplot(data=AvB, aes(x=mode*log2(fold), y=-log10(qValue), col=diffexpressed)) +
+    geom_text(data = filtered, aes(label = PFR)) +
+    geom_point(size=1)+
+    theme_minimal()+
+    ggtitle(sprintf("%s vs %s",A,B)) +
+    xlab(expression(log[2] ~ Fold ~ Change)) + ylab(expression(-log[10] ~ FDR)) +
+    theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))+
+    theme(plot.title = element_text(size=12, face="bold", hjust=0.5)) +
+    theme(axis.title.x = element_text( size=10, face="bold", color="black")) +
+    theme(axis.title.y = element_text( size=10, face="bold", color="black") ) +
+    theme(axis.text.x = element_text( size=8,  color="black")) +
+    theme(axis.text.y = element_text( size=8,  color="black") ) +
+    theme(legend.position = "none") +
+    geom_vline(xintercept=c(-0.5, 0.5), col="red", linetype = "longdash") +
+    geom_hline(yintercept=-log10(0.05), col="red", linetype = "longdash") +
+    scale_colour_manual(values = mycolors)+
+    xlim((0-maxFold),(0+maxFold))
+
+}
+comps <- unique(params$finalData %>% dplyr:: select(c('Treatment1','Treatment2')))
+
+MLMvolcanoPlot(comps[,"Treatment2"],comps[,"Treatment1"], params$finalData, params$pfr) 
+```
+# Table of most significant proteoforms from dataset
+```{r, echo=FALSE}
+
+```
+
+# HeatMap
+```{r, echo=FALSE}
+
+```
+
+# Mass distribution of PFRs in dataset
+```{r, echo=FALSE}
+
+```
+# PCA of samples between treatments: (Treatment Groups)
+```{r, echo=FALSE}
+
+```
