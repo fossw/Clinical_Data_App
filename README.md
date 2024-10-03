@@ -4,8 +4,8 @@
 ## Dependencies
 - Must have R and R Shiny installed. (install.packages("shiny"))
 - Must store data in CSV format
-## Executing PFRVisGen.R
-- R -e "shiny::runApp('PFRVisGen', launch.browser = TRUE)"
+## Executing ClinDataGen.R
+- R -e "shiny::runApp('ClinDataGen', launch.browser = TRUE)"
 ## Skills Needed:
 - R, R Shiny, ggplot2, Plotly, lme4
 ## Date Created
